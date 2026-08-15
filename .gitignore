@@ -4,6 +4,4 @@ __pycache__/
 venv/
 
 # Scraped output — regenerate with `python -m uk_news scrape`
-data/*.db
-data/*.csv
-data/*.jsonl
+
