@@ -1,0 +1,145 @@
+# Uttarakhand news sources — Phase 1 "Local News Portals" ingestion layer.
+#
+# Every `enabled: true` feed below was probed live on 2026-08-14 and returned
+# a parseable RSS body with >0 items. Dead sources are kept with `enabled: false`
+# and a reason, so nobody burns an afternoon rediscovering that they 404.
+#
+# Two discovery strategies:
+#   rss    -> publisher's own feed. Direct, fast, no decoding needed.
+#   gnews  -> Google News RSS search. Used for publishers that block us or
+#             killed their feeds. Links are encoded and MUST be decoded
+#             (see uk_news/discovery.py) before extraction.
+
+defaults:
+  # Politeness. These are public news pages, but we are a govt-facing project:
+  # behave like a well-mannered crawler.
+  request_timeout: 25
+  per_domain_delay: 1.5      # seconds between hits on the SAME domain
+  max_retries: 2
+  respect_robots: true
+  user_agent: >-
+    UK-SentimentBot/1.0 (Uttarakhand public-sentiment research prototype;
+    contact: neelmanidas@gmail.com)
+
+# ---------------------------------------------------------------------------
+# Direct publisher RSS — preferred. Cheapest and most reliable.
+# ---------------------------------------------------------------------------
+rss_sources:
+  - name: amar_ujala_uttarakhand
+    publisher: Amar Ujala
+    url: https://www.amarujala.com/rss/uttarakhand.xml
+    language: hi
+    enabled: true
+    # verified: 40 items
+
+  - name: amar_ujala_dehradun
+    publisher: Amar Ujala
+    url: https://www.amarujala.com/rss/dehradun.xml
+    language: hi
+    enabled: true
+    # verified: 40 items; only 21 overlap with the state feed, so this
+    # genuinely adds ~19 Dehradun-specific stories. Worth keeping both.
+
+  - name: news18_hindi_uttarakhand
+    publisher: News18 Hindi
+    url: https://hindi.news18.com/commonfeeds/v1/hin/rss/uttarakhand.xml
+    language: hi
+    enabled: true
+    # verified: 200 items — by far the deepest single feed.
+
+  - name: garhwal_post
+    publisher: Garhwal Post
+    url: https://garhwalpost.in/feed/
+    language: en
+    enabled: true
+    # verified: 10 items. Main English-language Dehradun daily.
+
+  - name: hill_mail
+    publisher: Hill Mail
+    url: https://hillmail.in/feed/
+    language: hi
+    enabled: true
+    # verified: 10 items
+
+  - name: devbhoomi_media
+    publisher: Devbhoomi Media
+    url: https://devbhoomimedia.com/feed/
+    language: hi
+    enabled: true
+    # verified: 10 items
+
+  # --- Verified DEAD as of 2026-08-14. Reach these via gnews_queries instead. -
+  - name: dainik_jagran_uttarakhand
+    publisher: Dainik Jagran
+    url: https://www.jagran.com/rss/news/state/uttarakhand.xml
+    language: hi
+    enabled: false
+    reason: "HTTP 404 on all 4 URL patterns tried — Jagran appears to have retired public RSS."
+
+  - name: live_hindustan_uttarakhand
+    publisher: Live Hindustan
+    url: https://www.livehindustan.com/rss/uttarakhand
+    language: hi
+    enabled: false
+    reason: "HTTP 503 — bot-blocked at the edge."
+
+  - name: toi_dehradun
+    publisher: Times of India
+    url: https://timesofindia.indiatimes.com/rssfeeds/58907779.cms
+    language: en
+    enabled: false
+    reason: "Returns 200 but 0 items. Generic TOI feeds return national news, not Dehradun."
+
+  - name: ht_dehradun
+    publisher: Hindustan Times
+    url: https://www.hindustantimes.com/feeds/rss/cities/dehradun-news/rssfeed.xml
+    language: en
+    enabled: false
+    reason: "Returns 200 but 0 items."
+
+  - name: etv_bharat_uttarakhand
+    publisher: ETV Bharat
+    url: https://www.etvbharat.com/rss/uttarakhand
+    language: hi
+    enabled: false
+    reason: "HTTP 404. Reachable via Google News (confirmed decoding to etvbharat.com)."
+
+# ---------------------------------------------------------------------------
+# Google News RSS search — recovers the blocked/dead publishers above and adds
+# topical depth on the grievances the project actually cares about.
+#
+# `q` uses Google News search syntax. `when:7d` limits to the last 7 days.
+# hl/gl/ceid control language+region: IN:hi = India/Hindi, IN:en = India/English.
+# ---------------------------------------------------------------------------
+gnews_queries:
+  - name: gnews_uttarakhand_hi
+    q: "उत्तराखंड when:7d"
+    lang: hi
+    enabled: true
+
+  - name: gnews_uksssc
+    q: "UKSSSC OR UKPSC OR \"पेपर लीक\" उत्तराखंड when:14d"
+    lang: hi
+    enabled: true
+    # The single most important query for this project — recruitment
+    # irregularities are the core grievance per the project doc §2.
+
+  - name: gnews_dhami_govt
+    q: "धामी सरकार उत्तराखंड when:7d"
+    lang: hi
+    enabled: true
+
+  - name: gnews_protest_youth
+    q: "उत्तराखंड युवा बेरोजगारी OR प्रदर्शन OR आंदोलन when:14d"
+    lang: hi
+    enabled: true
+
+  - name: gnews_uttarakhand_en
+    q: "Uttarakhand government when:7d"
+    lang: en
+    enabled: true
+
+  - name: gnews_dehradun_en
+    q: "Dehradun protest OR recruitment OR unemployment when:14d"
+    lang: en
+    enabled: true

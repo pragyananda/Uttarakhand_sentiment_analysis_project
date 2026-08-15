@@ -1,0 +1,307 @@
+# Lexicons for relevance filtering, district tagging, and aspect tagging.
+#
+# Why this file exists: Google News and the broader English feeds leak national
+# stories. A story about Mumbai milk adulteration is not Uttarakhand sentiment.
+# `relevance` decides what we keep; `aspects` pre-tags each article for the
+# Aspect-Based Sentiment objective (project doc §3.2) so Phase 3 doesn't have
+# to re-derive it from scratch.
+#
+# All matching is case-insensitive and covers Devanagari + roman transliteration
+# (Hinglish), since regional coverage mixes both freely.
+
+# --- Does this article concern Uttarakhand at all? ------------------------
+# An article is relevant if it matches >= `min_relevance_hits` terms from
+# `relevance` (any sublist), OR it came from a source that is already
+# Uttarakhand-scoped (the local RSS feeds are trusted by definition).
+min_relevance_hits: 1
+
+relevance:
+  state:
+    - उत्तराखंड
+    - उत्तराखण्ड
+    - uttarakhand
+    - uttrakhand
+    - देवभूमि
+    - devbhoomi
+    - गढ़वाल
+    - garhwal
+    - कुमाऊं
+    - कुमाऊँ
+    - kumaon
+    - kumaun
+
+  institutions:
+    - UKSSSC
+    - UKPSC
+    - यूकेएसएसएससी
+    - यूकेपीएससी
+    - अधीनस्थ सेवा चयन आयोग
+    - लोक सेवा आयोग
+    - उत्तराखंड सरकार
+    - uttarakhand government
+    - राज्य सरकार
+    - विधानसभा
+    - सचिवालय
+
+  figures:
+    # Office names, not just personal names — survives a cabinet reshuffle.
+    - मुख्यमंत्री
+    - chief minister
+    - धामी
+    - dhami
+    - पुष्कर सिंह धामी
+    - राज्यपाल
+    - governor
+    - कैबिनेट मंत्री
+
+# --- District / city tagging (feeds the NER objective, project doc §3.3) ---
+# Maps a canonical district name to the surface forms seen in text.
+districts:
+  Dehradun:      [देहरादून, dehradun, doon, मसूरी, mussoorie, ऋषिकेश, rishikesh, विकासनगर]
+  Haridwar:      [हरिद्वार, haridwar, रुड़की, roorkee, ज्वालापुर]
+  Nainital:      [नैनीताल, nainital, हल्द्वानी, haldwani, रामनगर, ramnagar, लालकुआं]
+  Udham Singh Nagar: [ऊधम सिंह नगर, udham singh nagar, रुद्रपुर, rudrapur, काशीपुर, kashipur, खटीमा]
+  Pauri Garhwal: [पौड़ी, pauri, कोटद्वार, kotdwar, श्रीनगर गढ़वाल]
+  Tehri Garhwal: [टिहरी, tehri, नई टिहरी, देवप्रयाग, devprayag]
+  Chamoli:       [चमोली, chamoli, जोशीमठ, joshimath, गोपेश्वर, बद्रीनाथ, badrinath]
+  Rudraprayag:   [रुद्रप्रयाग, rudraprayag, केदारनाथ, kedarnath]
+  Uttarkashi:    [उत्तरकाशी, uttarkashi, गंगोत्री, gangotri, यमुनोत्री, barkot]
+  Almora:        [अल्मोड़ा, almora, रानीखेत, ranikhet]
+  Pithoragarh:   [पिथौरागढ़, pithoragarh, धारचूला, dharchula, मुनस्यारी, munsyari]
+  Bageshwar:     [बागेश्वर, bageshwar, कपकोट]
+  Champawat:     [चंपावत, champawat, टनकपुर, tanakpur, लोहाघाट]
+
+# --- Aspect tagging: what is the article actually ABOUT? -------------------
+# Multi-label. Two tiers, because single generic words are not evidence:
+#   strong -> unambiguous for this aspect; ONE hit assigns the tag.
+#   terms  -> generic on their own; need `min_aspect_hits` distinct matches.
+# Without this split, a school-safety story matched "student" + "exam" +
+# "investigation" and came back tagged as a paper-leak protest.
+min_aspect_hits: 2
+
+aspects:
+  recruitment_jobs:
+    strong:
+      - बेरोजगारी
+      - unemployment
+      - रिक्त पद
+      - सरकारी नौकरी
+      - recruitment drive
+      - भर्ती परीक्षा
+    terms:
+      - भर्ती
+      - bharti
+      - नौकरी
+      - naukri
+      - रोजगार
+      - recruitment
+      - vacancy
+      - नियुक्ति
+      - job
+      - अभ्यर्थी
+      - candidate
+
+  exam_paper_leak:
+    strong:
+      - पेपर लीक
+      - paper leak
+      - प्रश्नपत्र लीक
+      - भर्ती घोटाला
+      - नकल विरोधी
+      - answer key
+      - उत्तर कुंजी
+      - परीक्षा रद्द
+      - exam cancelled
+    terms:
+      - परीक्षा
+      - exam
+      - नकल
+      - धांधली
+      - अनियमितता
+      - irregularit
+      - घोटाला
+      - scam
+
+  investigation_justice:
+    strong:
+      - सीबीआई
+      - CBI
+      - एसआईटी
+      - SIT
+      - चार्जशीट
+      - chargesheet
+      - हाईकोर्ट
+      - high court
+      - सुप्रीम कोर्ट
+    terms:
+      - जांच
+      - investigation
+      - गिरफ्तार
+      - arrest
+      - एफआईआर
+      - FIR
+      - अदालत
+      - court
+      - आरोपी
+      - accused
+
+  protest_agitation:
+    strong:
+      - प्रदर्शन
+      - protest
+      - आंदोलन
+      - agitation
+      - धरना
+      - dharna
+      - हड़ताल
+      - strike
+      - लाठीचार्ज
+      - lathi charge
+      - बेरोजगार संघ
+    terms:
+      - रैली
+      - rally
+      - युवा
+      - youth
+      - छात्र
+      - student
+      - नारेबाजी
+      - ज्ञापन
+      - मांग
+      - demand
+
+  infrastructure:
+    strong:
+      - सड़क निर्माण
+      - हाईवे
+      - highway
+      - ऑल वेदर रोड
+      - बिजली कटौती
+      - जल संकट
+      - water supply
+      - टनल
+      - tunnel
+    terms:
+      - सड़क
+      - road
+      - पुल
+      - bridge
+      - बिजली
+      - electricity
+      - निर्माण
+      - construction
+      - परियोजना
+      - project
+
+  environment_disaster:
+    strong:
+      - आपदा
+      - disaster
+      - भूस्खलन
+      - landslide
+      - बादल फटना
+      - बादल फटने
+      - cloudburst
+      - बाढ़
+      - flood
+      - भूकंप
+      - earthquake
+      - वनाग्नि
+      - ग्लेशियर
+      - glacier
+      - भू-धंसाव
+    terms:
+      - पर्यावरण
+      - environment
+      - जंगल
+      - forest
+      - बारिश
+      - rain
+      - मलबा
+      - नदी
+
+  migration_demography:
+    strong:
+      - पलायन
+      - palayan
+      - migration
+      - मूल निवास
+      - मूल निवासी
+      - domicile
+      - भू-कानून
+      - भू कानून
+      - land law
+      - जनसंख्या असंतुलन
+    terms:
+      - जनसंख्या
+      - demograph
+      - गांव खाली
+      - बाहरी लोग
+
+  health_education:
+    strong:
+      - स्वास्थ्य सेवा
+      - अस्पताल
+      - hospital
+      - मेडिकल कॉलेज
+      - शिक्षा व्यवस्था
+      - विश्वविद्यालय
+      - university
+      - डॉक्टरों की कमी
+    terms:
+      - स्वास्थ्य
+      - health
+      - डॉक्टर
+      - doctor
+      - स्कूल
+      - school
+      - शिक्षा
+      - education
+      - कॉलेज
+      - college
+      - मरीज
+
+  tourism_religion:
+    strong:
+      - चारधाम
+      - char dham
+      - chardham
+      - चारधाम यात्रा
+      - पर्यटन
+      - tourism
+      - कांवड़
+      - kanwar
+      - केदारनाथ यात्रा
+    terms:
+      - यात्रा
+      - yatra
+      - तीर्थ
+      - pilgrim
+      - श्रद्धालु
+      - मंदिर
+      - temple
+
+  politics_governance:
+    strong:
+      - भाजपा
+      - BJP
+      - कांग्रेस
+      - congress
+      - विधानसभा चुनाव
+      - कैबिनेट बैठक
+      - मुख्यमंत्री धामी
+      - विपक्ष
+    terms:
+      - चुनाव
+      - election
+      - विधायक
+      - MLA
+      - मंत्री
+      - minister
+      - नीति
+      - policy
+      - बजट
+      - budget
+      - कैबिनेट
+      - cabinet
+      - सरकार

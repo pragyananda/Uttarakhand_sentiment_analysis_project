@@ -1,0 +1,16 @@
+[theme]
+# Pinned to light so charts render on the exact surface the palette was
+# validated against (#fcfcfb). Do not switch to dark without re-running
+# the palette validator for the dark surface.
+base = "light"
+backgroundColor = "#f9f9f7"
+secondaryBackgroundColor = "#fcfcfb"
+textColor = "#0b0b0b"
+primaryColor = "#2a78d6"
+font = "sans serif"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

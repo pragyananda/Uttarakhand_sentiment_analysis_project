@@ -1,0 +1,35 @@
+# Uttarakhand newspaper scraper — verified working on Python 3.13.12
+
+requests>=2.32
+lxml>=6.1
+PyYAML>=6.0
+pandas>=2.0
+
+# RSS parsing
+feedparser>=6.0.14
+
+# Article body extraction (both are used; whichever yields more text wins)
+trafilatura>=2.2.0
+newspaper4k>=0.9.6
+
+# REQUIRED by newspaper4k for Hindi pages. Without it newspaper4k raises
+# ImportError on every Devanagari article — it auto-detects language, so
+# omitting the language argument does not avoid this.
+indic-nlp-library>=0.92
+
+# Decodes news.google.com/rss/articles/CBM... redirector links into real
+# publisher URLs. These links do NOT resolve via HTTP redirect, so without
+# this every Google News source is unusable.
+googlenewsdecoder>=0.1.7
+
+# --- Phase 3: sentiment -----------------------------------------------------
+# Multilingual sentiment (Hindi + English). VADER and TextBlob are English-only
+# lexicons — with 84% of our corpus in Devanagari they would score almost
+# everything neutral and flatten the dataset.
+transformers>=5.0
+torch>=2.0
+
+# --- Phase 4: dashboard -----------------------------------------------------
+streamlit>=1.35          # needs >=1.35 for st.plotly_chart(on_select=...)
+plotly>=6.0
+scikit-learn>=1.3        # TF-IDF + KMeans topic extraction
