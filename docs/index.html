@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uttarakhand Public Sentiment</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏔️</text></svg>">
+<style>
+  :root{
+    --surface:#fcfcfb; --page:#f9f9f7; --ink:#0b0b0b; --ink2:#52514e;
+    --muted:#898781; --grid:#e1e0d9; --axis:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --pos:#2a78d6; --neu:#898781; --neg:#e34948; --uns:#c3c2b7;
+    --s1:#2a78d6; --issue:#eb6834; --district:#1baf7a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--page); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; font-size:14px;
+  }
+  .wrap{max-width:1280px; margin:0 auto; padding:26px 20px 60px 20px}
+  h1,h2,h3{color:var(--ink); letter-spacing:-0.01em}
+
+  .uk-hero{border:1px solid var(--border); border-radius:12px; background:var(--surface);
+    padding:18px 22px; margin-bottom:6px; display:flex; align-items:baseline;
+    justify-content:space-between; gap:12px; flex-wrap:wrap}
+  .uk-hero h1{margin:0; font-size:1.5rem}
+  .uk-hero .snap{font-size:.76rem; color:var(--muted)}
+  .badge{display:inline-block; padding:2px 10px; border-radius:999px; font-size:.7rem;
+    font-weight:700; letter-spacing:.05em; background:#2a78d61f; color:var(--s1);
+    vertical-align:middle; margin-left:8px}
+
+  .uk-caveat{border:1px solid var(--border); border-left:3px solid var(--s1);
+    border-radius:8px; background:var(--surface); padding:12px 16px; margin:14px 0 20px 0;
+    color:var(--ink2); font-size:.88rem; line-height:1.5}
+  .uk-caveat b{color:var(--ink)}
+
+  /* ---- stat tiles ---- */
+  .tiles{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:22px}
+  .uk-stat{border:1px solid var(--border); border-radius:11px; background:var(--surface);
+    overflow:hidden}
+  .uk-stat .accent{height:3px; width:100%}
+  .uk-stat .inner{padding:13px 16px 14px 16px}
+  .uk-stat .label{font-size:.7rem; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--muted); display:flex; align-items:center; gap:5px}
+  .uk-stat .value{font-size:2.1rem; font-weight:650; color:var(--ink); line-height:1.05;
+    margin-top:5px; overflow-wrap:anywhere}
+  .uk-stat .value.mid{font-size:1.5rem}
+  .uk-stat .value.long{font-size:1.12rem; line-height:1.25}
+  .uk-stat .sub{font-size:.76rem; color:var(--ink2); margin-top:3px}
+  .uk-stat .viz{margin-top:9px; height:30px}
+  .uk-stat .viz svg{display:block; width:100%; height:30px}
+
+  /* ---- tabs ---- */
+  .tabs{display:flex; gap:6px; border-bottom:1px solid var(--grid); margin-bottom:18px;
+    flex-wrap:wrap}
+  .tab-btn{appearance:none; border:none; background:none; cursor:pointer;
+    font-size:1.06rem; font-weight:600; letter-spacing:-0.005em; color:var(--ink2);
+    padding:12px 20px; border-radius:9px 9px 0 0; border-bottom:2px solid transparent;
+    font-family:inherit}
+  .tab-btn:hover{background:var(--page); color:var(--ink)}
+  .tab-btn.on{color:var(--s1); border-bottom-color:var(--s1)}
+  .panel{display:none}
+  .panel.on{display:block}
+
+  /* ---- filter row ---- */
+  .frow{display:grid; grid-template-columns:2.2fr 1.3fr 1.3fr 1.6fr; gap:12px;
+    align-items:end; margin-bottom:14px}
+  .fld label{display:block; font-size:.78rem; color:var(--ink2); margin-bottom:5px;
+    font-weight:600}
+  .fld .pair{display:flex; gap:6px; align-items:center}
+  input[type=date],input[type=text],select{
+    width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:8px;
+    background:var(--surface); color:var(--ink); font:inherit; font-size:.86rem}
+  input[type=text]:focus,input[type=date]:focus{outline:2px solid #2a78d640; border-color:var(--s1)}
+  .chips{display:flex; gap:6px; flex-wrap:wrap}
+  .chip{cursor:pointer; user-select:none; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--border); background:var(--surface); font-size:.8rem;
+    color:var(--ink2)}
+  .chip.on{border-color:var(--s1); color:var(--s1); background:#2a78d612; font-weight:600}
+  .chip.neg.on{border-color:var(--neg); color:var(--neg); background:#e3494812}
+  .chip.neu.on{border-color:var(--neu); color:var(--neu); background:#8987811f}
+
+  /* publisher dropdown */
+  .dd{position:relative}
+  .dd>summary{list-style:none; cursor:pointer; padding:7px 9px; border:1px solid var(--border);
+    border-radius:8px; background:var(--surface); font-size:.86rem; color:var(--ink2);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .dd>summary::-webkit-details-marker{display:none}
+  .dd>summary:after{content:"▾"; float:right; color:var(--muted)}
+  .dd .menu{position:absolute; z-index:30; top:calc(100% + 4px); left:0; right:0;
+    max-height:230px; overflow:auto; border:1px solid var(--border); border-radius:9px;
+    background:var(--surface); box-shadow:0 8px 24px rgba(11,11,11,.12); padding:6px}
+  .dd .menu label{display:flex; gap:8px; align-items:center; padding:5px 8px;
+    border-radius:6px; font-size:.83rem; color:var(--ink2); cursor:pointer}
+  .dd .menu label:hover{background:var(--page)}
+
+  /* toggle */
+  .tgl{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
+    padding:6px 0; font-size:.83rem; color:var(--ink2); font-weight:600}
+  .tgl .tk{width:36px; height:20px; border-radius:999px; background:var(--axis);
+    position:relative; transition:background .15s; flex:0 0 36px}
+  .tgl .tk:after{content:""; position:absolute; top:2px; left:2px; width:16px; height:16px;
+    border-radius:50%; background:#fff; transition:left .15s}
+  .fld label.tgl{display:flex; margin-bottom:0}
+  .tgl input{display:none}
+  .tgl input:checked+.tk{background:var(--s1)}
+  .tgl input:checked+.tk:after{left:18px}
+
+  /* range slider */
+  .rng{display:flex; flex-direction:column; gap:4px}
+  .rng .lab{font-size:.78rem; color:var(--ink2); font-weight:600}
+  .rng .lab b{color:var(--s1)}
+  input[type=range]{width:100%; accent-color:var(--s1)}
+
+  /* ---- cards / layout ---- */
+  .card{border:1px solid var(--border); border-radius:11px; background:var(--surface);
+    padding:14px 16px; margin-bottom:14px}
+  .card-h{margin:0 0 2px 0; font-size:.95rem; font-weight:600; color:var(--ink)}
+  .card-s{font-size:.8rem; color:var(--muted); margin-bottom:10px; line-height:1.45}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .grid2b{display:grid; grid-template-columns:1.15fr 1fr; gap:14px}
+  .grid-graph{display:grid; grid-template-columns:2.45fr 1fr; gap:14px; align-items:start}
+
+  /* ---- sentiment faces ---- */
+  .uk-faces{display:flex; gap:12px; flex-wrap:wrap; margin:10px 0 14px 0}
+  .uk-face{flex:1 1 130px; border:1px solid var(--border); border-radius:10px;
+    background:var(--surface); padding:14px 12px 12px 12px; text-align:center}
+  .uk-face .emoji{font-size:2rem; line-height:1.1}
+  .uk-face .pct{font-size:1.5rem; font-weight:650; margin-top:2px}
+  .uk-face .lbl{font-size:.78rem; color:var(--ink2); text-transform:capitalize}
+  .uk-face .cnt{font-size:.72rem; color:var(--muted); margin-top:2px}
+  .uk-faces.compact{gap:7px; margin:6px 0 10px 0}
+  .uk-faces.compact .uk-face{flex:1 1 62px; padding:8px 4px 7px 4px}
+  .uk-faces.compact .emoji{font-size:1.25rem}
+  .uk-faces.compact .pct{font-size:1.02rem}
+  .uk-faces.compact .lbl{font-size:.66rem}
+  .uk-faces.compact .cnt{font-size:.62rem}
+
+  /* ---- article cards ---- */
+  .cards{display:grid; gap:10px}
+  .cards.c2{grid-template-columns:1fr 1fr}
+  .cards.c3{grid-template-columns:1fr 1fr 1fr}
+  .cards.c1{grid-template-columns:1fr}
+  .uk-card-art{display:flex; gap:14px; align-items:flex-start; border:1px solid var(--border);
+    border-radius:10px; background:var(--surface); padding:10px; min-width:0}
+  .uk-card-art .thumb{width:116px; height:78px; flex:0 0 116px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center; color:var(--ink2);
+    font-size:1.5rem; font-weight:700; overflow:hidden;
+    background-size:cover; background-position:center}
+  .uk-card-art .bd{flex:1 1 auto; min-width:0}
+  .uk-card-art a{color:var(--ink); text-decoration:none; font-weight:600; font-size:.94rem;
+    line-height:1.35; display:block; overflow-wrap:anywhere}
+  .uk-card-art a:hover{color:var(--s1); text-decoration:underline}
+  .uk-card-art .meta{font-size:.76rem; color:var(--muted); margin:5px 0 7px 0}
+  .uk-card-art .tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .uk-tag{display:inline-block; padding:1px 8px; border-radius:999px; font-size:.7rem;
+    color:var(--ink2); background:var(--page); border:1px solid var(--border)}
+  .uk-pill{display:inline-block; padding:1px 8px; border-radius:999px; font-size:.7rem;
+    font-weight:600}
+
+  .count-line{font-size:.82rem; color:var(--muted); margin:8px 0}
+  .count-line b{color:var(--ink)}
+  .note{font-size:.8rem; color:var(--muted); margin-top:6px}
+  .empty{border:1px dashed var(--axis); border-radius:9px; padding:16px; color:var(--ink2);
+    font-size:.86rem; background:var(--surface)}
+
+  /* ---- charts ---- */
+  .tonebar{display:flex; height:36px; border-radius:6px; overflow:visible; margin:14px 0 6px 0}
+  .tonebar .seg{height:100%; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:.78rem; font-weight:600; min-width:2px; cursor:default}
+  .tonebar .seg+.seg{margin-left:2px}
+  .tonebar .seg:first-child{border-radius:4px 0 0 4px}
+  .tonebar .seg:last-child{border-radius:0 4px 4px 0}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:.78rem; color:var(--ink2)}
+  .legend .sw{display:inline-block; width:10px; height:10px; border-radius:3px;
+    margin-right:5px; vertical-align:-1px}
+
+  .hbars{display:flex; flex-direction:column; gap:7px; margin-top:8px}
+  .hb{display:grid; grid-template-columns:170px 1fr 44px; gap:10px; align-items:center}
+  .hb .nm{font-size:.82rem; color:var(--ink2); text-align:right; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis}
+  .hb .tr{background:none; height:16px; position:relative}
+  .hb .bar{height:16px; border-radius:0 4px 4px 0; background:var(--s1); min-width:2px}
+  .hb .vl{font-size:.8rem; color:var(--ink2)}
+
+  table.tbl{width:100%; border-collapse:collapse; font-size:.84rem}
+  table.tbl th{font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--muted); text-align:left; font-weight:600; padding:6px 8px;
+    border-bottom:1px solid var(--grid)}
+  table.tbl td{padding:6px 8px; border-bottom:1px solid var(--grid); color:var(--ink2)}
+  table.tbl td.num,table.tbl th.num{text-align:right; font-variant-numeric:tabular-nums}
+  table.tbl tr:last-child td{border-bottom:none}
+  .scrollx{overflow-x:auto}
+
+  details.exp{margin-top:10px}
+  details.exp>summary{cursor:pointer; font-size:.8rem; color:var(--muted); user-select:none}
+  details.exp[open]>summary{margin-bottom:8px}
+
+  svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+
+  /* graph */
+  #gwrap svg{display:block; width:100%; height:auto}
+  .gnode{cursor:pointer}
+  .gnode circle{transition:stroke .1s}
+  .gnode.sel circle{stroke:var(--ink)!important; stroke-width:2.5px!important}
+
+  /* buttons */
+  .btn{appearance:none; cursor:pointer; border:1px solid var(--border); border-radius:9px;
+    background:var(--surface); color:var(--ink2); font:inherit; font-size:.84rem;
+    font-weight:600; padding:8px 14px}
+  .btn:hover{border-color:var(--s1); color:var(--s1)}
+
+  /* tooltip */
+  #tt{position:fixed; z-index:99; pointer-events:none; display:none;
+    background:var(--surface); border:1px solid var(--axis); border-radius:8px;
+    padding:7px 10px; font-size:.78rem; color:var(--ink); line-height:1.45;
+    box-shadow:0 6px 18px rgba(11,11,11,.12); max-width:280px}
+
+  footer{margin-top:30px; font-size:.76rem; color:var(--muted); text-align:center;
+    line-height:1.6}
+
+  @media (max-width:980px){
+    .tiles{grid-template-columns:repeat(2,1fr)}
+    .frow{grid-template-columns:1fr 1fr}
+    .grid2,.grid2b,.grid-graph{grid-template-columns:1fr}
+    .cards.c3{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:620px){
+    .tiles{grid-template-columns:1fr}
+    .frow{grid-template-columns:1fr}
+    .cards.c2,.cards.c3{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="tt"></div>
+<div class="wrap">
+
+  <div class="uk-hero">
+    <h1>🏔️ Uttarakhand Public Sentiment &amp; Opinion Mining<span class="badge">STATIC DEMO</span></h1>
+    <div class="snap" id="snapinfo"></div>
+  </div>
+
+  <div class="uk-caveat">
+    <b>⚠️ What this measures:</b> the tone of <b>news coverage</b> — how newspapers
+    reported an event. This is <b>media sentiment</b>, not public opinion; no citizen
+    was surveyed. Public reaction requires comment data (YouTube / social), which is a
+    separate module. Treat every number here as “how it was reported”, never as
+    “what people think”. <b>This page is a static snapshot</b> — all data was
+    pre-loaded from the project database; live scraping needs the full Python app.
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn on" data-p="p-browse">1 · Browse</button>
+    <button class="tab-btn" data-p="p-analysis">2 · Analysis</button>
+    <button class="tab-btn" data-p="p-graph">3 · Knowledge Graph</button>
+    <button class="tab-btn" data-p="p-articles">4 · Articles</button>
+  </div>
+
+  <!-- ================= TAB 1 : BROWSE ================= -->
+  <div class="panel on" id="p-browse">
+    <div class="empty" style="margin-bottom:14px">
+      💾 <b>Browsing the pre-loaded database.</b> The live-scrape mode of this demo
+      needs the Streamlit + Python pipeline and is not part of the static build.
+    </div>
+    <div id="f-browse"></div>
+    <div class="fld" style="margin-bottom:10px">
+      <label>🔎 Search headlines and text</label>
+      <input type="text" id="q-browse" placeholder="e.g. UKSSSC, पेपर लीक, धामी, भर्ती">
+    </div>
+    <div class="count-line" id="c-browse"></div>
+    <div id="faces-browse"></div>
+    <div class="cards c2" id="cards-browse"></div>
+    <div class="note" id="more-browse"></div>
+    <div style="margin-top:14px">
+      <button class="btn" id="dl-browse">⬇️ Download this selection as CSV</button>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2 : ANALYSIS ================= -->
+  <div class="panel" id="p-analysis">
+    <div id="f-an"></div>
+    <div id="faces-an"></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h">Coverage tone</div>
+        <div class="card-s">Diverging scale — negative | neutral | positive</div>
+        <div id="tone-an"></div>
+      </div>
+      <div class="card">
+        <div class="card-h">Tone over time</div>
+        <div class="card-s">Articles per day by sentiment class</div>
+        <div id="tl-an"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h">Issues covered</div>
+      <div class="card-s">Aspect tags from the lexicon · one series, one colour</div>
+      <div id="iss-an"></div>
+    </div>
+    <div class="grid2b">
+      <div class="card">
+        <div class="card-h">Extracted topics</div>
+        <div class="card-s">TF-IDF + KMeans over article text · unsupervised, so it finds
+          themes the lexicon didn't anticipate (clusters precomputed offline)</div>
+        <div class="rng" style="max-width:260px;margin-bottom:8px">
+          <span class="lab">Number of topics: <b id="ntop-v">6</b></span>
+          <input type="range" id="ntop" min="3" max="10" step="1" value="6">
+        </div>
+        <div id="topics-an"></div>
+      </div>
+      <div class="card">
+        <div class="card-h">Sources</div>
+        <div class="card-s">Who is covering this, and in what tone</div>
+        <div id="src-an"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 3 : GRAPH ================= -->
+  <div class="panel" id="p-graph">
+    <div id="f-gr"></div>
+    <div class="frow" style="grid-template-columns:1fr 1fr 1fr">
+      <label class="tgl"><input type="checkbox" id="g-dist" checked><span class="tk"></span>
+        📍 Include districts</label>
+      <div class="rng">
+        <span class="lab">Max sources: <b id="g-src-v">10</b></span>
+        <input type="range" id="g-src" min="4" max="20" step="1" value="10">
+      </div>
+      <div class="rng">
+        <span class="lab" title="Hide links backed by fewer than this many shared articles — the main control for hairball density.">Minimum link strength: <b id="g-min-v">2</b></span>
+        <input type="range" id="g-min" min="1" max="8" step="1" value="2">
+      </div>
+    </div>
+    <div class="grid-graph">
+      <div class="card">
+        <div class="card-h">Source ↔ Issue ↔ District network</div>
+        <div class="card-s">Each node is a source, an issue or a district. A line means
+          they appear together in the same articles — thicker means more.
+          <b>Click any node</b> for details.&nbsp;
+          <span class="uk-tag" style="border-color:#2a78d6;color:#2a78d6">● Source</span>
+          <span class="uk-tag" style="border-color:#eb6834;color:#eb6834">● Issue</span>
+          <span class="uk-tag" style="border-color:#1baf7a;color:#1baf7a">● District</span>
+        </div>
+        <div id="gwrap"></div>
+      </div>
+      <div class="card" id="gdetail"></div>
+    </div>
+    <details class="exp"><summary>Table view — nodes and their connections</summary>
+      <div class="scrollx" id="gtable"></div>
+    </details>
+  </div>
+
+  <!-- ================= TAB 4 : ARTICLES ================= -->
+  <div class="panel" id="p-articles">
+    <div id="f-art"></div>
+    <div class="frow" style="grid-template-columns:2fr 1fr">
+      <div class="fld">
+        <label>🔎 Search</label>
+        <input type="text" id="q-art" placeholder="UKSSSC, पेपर लीक, धामी …">
+      </div>
+      <div class="fld">
+        <label>Sentiment</label>
+        <div class="chips" id="sent-art">
+          <span class="chip neg" data-s="negative">😠 negative</span>
+          <span class="chip neu" data-s="neutral">😐 neutral</span>
+          <span class="chip" data-s="positive">🙂 positive</span>
+        </div>
+      </div>
+    </div>
+    <div class="count-line" id="c-art"></div>
+    <div id="faces-art"></div>
+    <div class="rng" style="max-width:260px;margin-bottom:12px">
+      <span class="lab">Show: <b id="nart-v">16</b></span>
+      <input type="range" id="nart" min="6" max="48" step="2" value="16">
+    </div>
+    <div class="cards c3" id="cards-art"></div>
+  </div>
+
+  <footer>
+    Static export of the Uttarakhand sentiment dashboard · data snapshot baked at build
+    time · sentiment scored offline with a multilingual transformer model ·
+    deployable on GitHub Pages, Vercel, Netlify or any static host.
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+/* ============================== shared ================================== */
+const D = window.UK_DATA, A = D.articles;
+const SENT_C = {positive:"#2a78d6", neutral:"#898781", negative:"#e34948", unscored:"#c3c2b7"};
+const EMOJI  = {positive:"🙂", neutral:"😐", negative:"😠", unscored:"❔"};
+const ORDER  = ["negative","neutral","positive"];
+const NODE_TYPES = {source:{color:"#2a78d6",label:"Source"},
+                    issue:{color:"#eb6834",label:"Issue"},
+                    district:{color:"#1baf7a",label:"District"}};
+const INK2="#52514e", MUTED="#898781", GRID="#e1e0d9", SURFACE="#fcfcfb";
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pub = a => a.publisher || a.source || "—";
+const fmt1 = v => (v>=0?"+":"") + v.toFixed(2);
+
+/* tooltip */
+const tt = document.getElementById("tt");
+function ttShow(html, ev){ tt.innerHTML = html; tt.style.display = "block"; ttMove(ev); }
+function ttMove(ev){
+  const pad = 14, w = tt.offsetWidth, h = tt.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > innerWidth - 8)  x = ev.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = ev.clientY - h - pad;
+  tt.style.left = x + "px"; tt.style.top = y + "px";
+}
+function ttHide(){ tt.style.display = "none"; }
+function hover(el, htmlFn){
+  el.addEventListener("mouseenter", ev => ttShow(htmlFn(), ev));
+  el.addEventListener("mousemove", ttMove);
+  el.addEventListener("mouseleave", ttHide);
+}
+
+/* ====================== tiny SVG visuals (stat tiles) =================== */
+function svgSpark(vals, color){
+  vals = vals.filter(v => v != null);
+  if (vals.length < 2) return "";
+  const W=240, H=30, pad=3, lo=Math.min(...vals), hi=Math.max(...vals);
+  const span=(hi-lo)||1, step=W/(vals.length-1);
+  const pts = vals.map((v,i)=>[i*step, H-pad-(v-lo)/span*(H-2*pad)]);
+  const line = pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const [lx,ly] = pts[pts.length-1];
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="trend over time">
+    <polygon points="0,${H} ${line} ${W},${H}" fill="${color}" opacity="0.12"/>
+    <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" fill="${color}"/></svg>`;
+}
+function svgMeter(pct, color){
+  pct = Math.max(0, Math.min(100, pct));
+  return `<svg viewBox="0 0 240 30" preserveAspectRatio="none" role="img" aria-label="${pct.toFixed(0)} percent">
+    <rect x="0" y="11" width="240" height="8" rx="4" fill="${GRID}"/>
+    <rect x="0" y="11" width="${(pct*2.4).toFixed(1)}" height="8" rx="4" fill="${color}"/></svg>`;
+}
+function svgToneBar(neg, neu, pos){
+  const total = Math.max(neg+neu+pos, 1);
+  const ws = [neg,neu,pos].map(v => v/total*240);
+  const cs = [SENT_C.negative, SENT_C.neutral, SENT_C.positive];
+  let out = "", x = 0;
+  ws.forEach((w,i)=>{ if(w>0) out += `<rect x="${x.toFixed(1)}" y="10"
+      width="${Math.max(w-2,1).toFixed(1)}" height="10" rx="2" fill="${cs[i]}"/>`; x += w; });
+  return `<svg viewBox="0 0 240 30" preserveAspectRatio="none" role="img" aria-label="tone split">${out}</svg>`;
+}
+function statTile(label, value, sub, accent, viz){
+  const t = String(value);
+  const cls = "value" + (t.length>13 ? " long" : t.length>8 ? " mid" : "");
+  return `<div class="uk-stat"><div class="accent" style="background:${accent}"></div>
+    <div class="inner"><div class="label">${label}</div><div class="${cls}">${esc(t)}</div>
+    <div class="sub">${sub}</div>${viz?`<div class="viz">${viz}</div>`:""}</div></div>`;
+}
+
+/* ============================ header tiles ============================== */
+(function tiles(){
+  document.getElementById("snapinfo").textContent =
+    `Data snapshot · ${D.generated} · ${A.length} articles`;
+  const days = [...new Set(A.map(a=>a.day).filter(Boolean))].sort();
+  const perDay = days.map(d => A.filter(a=>a.day===d).length);
+  const govt = A.filter(a=>a.govt).length;
+  const n = {negative:0, neutral:0, positive:0, unscored:0};
+  A.forEach(a => n[a.label] = (n[a.label]||0)+1);
+  const imgs = A.filter(a=>a.img).length;
+  const pubs = new Set(A.map(pub)).size;
+
+  const aspCount = {};
+  A.forEach(a => a.aspects.forEach(t => aspCount[t]=(aspCount[t]||0)+1));
+  const top = Object.entries(aspCount).sort((x,y)=>y[1]-x[1])[0] || ["—",0];
+  const topSeries = days.map(d =>
+    A.filter(a=>a.day===d && a.aspects.includes(top[0])).length);
+  const latest = days[days.length-1] || "—";
+  const newestN = A.filter(a=>a.day===latest).length;
+  const avg = perDay.length ? perDay.reduce((s,v)=>s+v,0)/perDay.length : 0;
+
+  document.getElementById("tiles").innerHTML =
+    statTile("📰 Articles collected", A.length.toLocaleString(),
+      `${avg.toFixed(0)} per day average`, "#2a78d6", svgSpark(perDay, "#2a78d6")) +
+    statTile("🏛️ Government-related", govt,
+      `${(govt/A.length*100).toFixed(0)}% of all articles`, "#4a3aa7",
+      svgMeter(govt/A.length*100, "#4a3aa7")) +
+    statTile("😐 Coverage tone", `${(n.neutral/A.length*100).toFixed(0)}% neutral`,
+      `😠 ${n.negative} · 😐 ${n.neutral} · 🙂 ${n.positive}`, SENT_C.neutral,
+      svgToneBar(n.negative, n.neutral, n.positive)) +
+    statTile("🖼️ With lead photo", imgs,
+      `${(imgs/A.length*100).toFixed(0)}% · ${pubs} publishers`, "#eb6834",
+      svgMeter(imgs/A.length*100, "#eb6834")) +
+    statTile("🔥 Most covered issue", top[0],
+      `${new Set(A.filter(a=>a.aspects.includes(top[0])).map(a=>a.id)).size} articles · latest ${latest}`,
+      "#1baf7a", svgSpark(topSeries, "#1baf7a"));
+})();
+
+/* ================================ tabs ================================== */
+function showTab(pid){
+  document.querySelectorAll(".tab-btn").forEach(x=>x.classList.toggle("on", x.dataset.p===pid));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id===pid));
+}
+document.getElementById("tabs").addEventListener("click", ev => {
+  const b = ev.target.closest(".tab-btn"); if (!b) return;
+  showTab(b.dataset.p);
+  history.replaceState(null, "", "#" + b.dataset.p.slice(2));
+});
+if (/^#(browse|analysis|graph|articles)$/.test(location.hash))
+  showTab("p-" + location.hash.slice(1));
+
+/* ============================ filter rows =============================== */
+const DMIN = A.reduce((m,a)=>a.day&&a.day<m?a.day:m, "9999");
+const DMAX = A.reduce((m,a)=>a.day&&a.day>m?a.day:m, "0000");
+const ALL_PUBS = [...new Set(A.map(a=>a.publisher).filter(Boolean))].sort();
+
+function makeFilters(mountId, onChange){
+  const st = {from:DMIN, to:DMAX, langs:new Set(["hi","en"]), pubs:new Set(), govt:true};
+  const m = document.getElementById(mountId);
+  m.innerHTML = `<div class="frow">
+    <div class="fld"><label>📅 Date range</label><div class="pair">
+      <input type="date" class="f-from" min="${DMIN}" max="${DMAX}" value="${DMIN}">
+      <span style="color:var(--muted)">→</span>
+      <input type="date" class="f-to" min="${DMIN}" max="${DMAX}" value="${DMAX}"></div></div>
+    <div class="fld"><label>🌐 Language</label><div class="chips">
+      <span class="chip on" data-l="hi">हिंदी hi</span>
+      <span class="chip on" data-l="en">English en</span></div></div>
+    <div class="fld"><label>🗞️ Publisher</label>
+      <details class="dd"><summary>All publishers</summary><div class="menu">
+      ${ALL_PUBS.map(p=>`<label><input type="checkbox" value="${esc(p)}">${esc(p)}</label>`).join("")}
+      </div></details></div>
+    <div class="fld"><label>&nbsp;</label>
+      <label class="tgl" title="Requires a government institution or office-holder in the text — not just the word “Uttarakhand”, which also matches horoscopes and restaurant listings.">
+      <input type="checkbox" class="f-govt" checked><span class="tk"></span>🏛️ Government only</label></div>
+  </div>`;
+
+  m.querySelector(".f-from").addEventListener("change", e=>{st.from=e.target.value||DMIN; onChange();});
+  m.querySelector(".f-to").addEventListener("change", e=>{st.to=e.target.value||DMAX; onChange();});
+  m.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", ()=>{
+    const l = ch.dataset.l;
+    if (st.langs.has(l)) st.langs.delete(l); else st.langs.add(l);
+    ch.classList.toggle("on", st.langs.has(l)); onChange();
+  }));
+  const dd = m.querySelector(".dd"), sum = dd.querySelector("summary");
+  dd.querySelectorAll("input").forEach(cb => cb.addEventListener("change", ()=>{
+    if (cb.checked) st.pubs.add(cb.value); else st.pubs.delete(cb.value);
+    sum.textContent = st.pubs.size ? `${st.pubs.size} selected` : "All publishers";
+    onChange();
+  }));
+  m.querySelector(".f-govt").addEventListener("change", e=>{st.govt=e.target.checked; onChange();});
+
+  return { apply(rows){
+    return rows.filter(a =>
+      a.day && a.day >= st.from && a.day <= st.to &&
+      (!st.langs.size || st.langs.has(a.lang)) &&
+      (!st.pubs.size || st.pubs.has(a.publisher)) &&
+      (!st.govt || a.govt));
+  }};
+}
+
+/* ======================= shared render helpers ========================== */
+function facesHTML(rows, compact){
+  const total = Math.max(rows.length, 1), c = {};
+  rows.forEach(a => c[a.label]=(c[a.label]||0)+1);
+  const h = ORDER.map(l => {
+    const col = SENT_C[l], n = c[l]||0;
+    return `<div class="uk-face" style="border-top:3px solid ${col}">
+      <div class="emoji">${EMOJI[l]}</div>
+      <div class="pct" style="color:${col}">${(n/total*100).toFixed(0)}%</div>
+      <div class="lbl">${l}</div><div class="cnt">${n} articles</div></div>`;
+  }).join("");
+  return `<div class="uk-faces${compact?" compact":""}">${h}</div>`;
+}
+function pill(label, score){
+  const col = SENT_C[label] || MUTED;
+  const v = (score==null) ? "" : " " + fmt1(score);
+  return `<span class="uk-pill" style="background:${col}1f;color:${col}">${EMOJI[label]||"❔"} ${label}${v}</span>`;
+}
+const TINTS = ["#dce9fb","#fbe3d8","#d7f0e6","#f7e7c4","#e7e2f5"];
+function thumb(a){
+  if (a.img) return `<div class="thumb" style="background-image:url('${esc(a.img)}')"></div>`;
+  const p = pub(a), t = TINTS[[...p].reduce((s,c)=>s+c.codePointAt(0),0)%TINTS.length];
+  return `<div class="thumb" style="background:${t}"><span>${esc(p[0].toUpperCase())}</span></div>`;
+}
+function articleCard(a){
+  const tags =
+    a.districts.slice(0,2).map(t=>`<span class="uk-tag">📍 ${esc(t)}</span>`).join("") +
+    a.aspects.slice(0,2).map(t=>`<span class="uk-tag">🏷️ ${esc(t)}</span>`).join("");
+  return `<div class="uk-card-art">${thumb(a)}<div class="bd">
+    <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.title||"(untitled)")}</a>
+    <div class="meta">${esc(pub(a))} · ${a.day||"—"} · ${esc(a.lang)}</div>
+    <div class="tags">${pill(a.label, a.score)}${tags}</div></div></div>`;
+}
+function renderCards(el, rows, limit){
+  const sorted = [...rows].sort((x,y)=>(y.date||"").localeCompare(x.date||""));
+  el.innerHTML = sorted.slice(0, limit).map(articleCard).join("") ||
+    `<div class="empty">No articles match this selection.</div>`;
+  return sorted.length;
+}
+
+/* =========================== TAB 1 : BROWSE ============================= */
+const fBrowse = makeFilters("f-browse", renderBrowse);
+document.getElementById("q-browse").addEventListener("input", renderBrowse);
+let browseRows = [];
+function renderBrowse(){
+  let rows = fBrowse.apply(A);
+  const q = document.getElementById("q-browse").value.trim().toLowerCase();
+  if (q) rows = rows.filter(a => a.search.includes(q));
+  browseRows = rows;
+  document.getElementById("c-browse").innerHTML =
+    `<b>${rows.length}</b> of ${A.length} articles match.`;
+  document.getElementById("faces-browse").innerHTML = rows.length ? facesHTML(rows) : "";
+  const total = renderCards(document.getElementById("cards-browse"), rows, 12);
+  document.getElementById("more-browse").textContent =
+    total > 12 ? `Showing 12 of ${total} articles.` : "";
+}
+document.getElementById("dl-browse").addEventListener("click", ()=>{
+  const cols = ["id","url","title","publisher","source","lang","day","label","score",
+                "img","districts","aspects","govt"];
+  const cell = v => { v = String(v ?? ""); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const lines = [cols.join(",")].concat(browseRows.map(a => cols.map(c =>
+    cell(Array.isArray(a[c]) ? a[c].join("|") : a[c])).join(",")));
+  const blob = new Blob(["﻿"+lines.join("\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const link = Object.assign(document.createElement("a"),
+    {href:url, download:"uttarakhand_articles.csv"});
+  link.click(); URL.revokeObjectURL(url);
+});
+
+/* ========================== TAB 2 : ANALYSIS ============================ */
+const fAn = makeFilters("f-an", renderAnalysis);
+document.getElementById("ntop").addEventListener("input", e=>{
+  document.getElementById("ntop-v").textContent = e.target.value; renderAnalysis();
+});
+
+function toneBarInto(el, rows){
+  const c = {}; rows.forEach(a => c[a.label]=(c[a.label]||0)+1);
+  const total = ORDER.reduce((s,l)=>s+(c[l]||0),0);
+  if (!total){ el.innerHTML = `<div class="empty">No scored articles in this slice.</div>`; return; }
+  el.innerHTML =
+    `<div class="legend">${ORDER.map(l=>`<span><span class="sw" style="background:${SENT_C[l]}"></span>${EMOJI[l]} ${l}</span>`).join("")}</div>
+     <div class="tonebar"></div>
+     <details class="exp"><summary>Table view</summary><table class="tbl">
+       <tr><th>sentiment</th><th class="num">articles</th></tr>
+       ${ORDER.map(l=>`<tr><td>${l}</td><td class="num">${c[l]||0}</td></tr>`).join("")}
+     </table></details>`;
+  const bar = el.querySelector(".tonebar");
+  ORDER.forEach(l => {
+    const n = c[l]||0; if (!n) return;
+    const p = n/total*100;
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    seg.style.width = p + "%";
+    seg.style.background = SENT_C[l];
+    seg.textContent = p >= 12 ? `${l} ${p.toFixed(0)}%` : "";
+    hover(seg, ()=>`<b>${EMOJI[l]} ${l}</b><br>${n} articles (${p.toFixed(1)}%)`);
+    bar.appendChild(seg);
+  });
+}
+
+function timelineInto(el, rows){
+  const byDay = {};
+  rows.forEach(a => { if (!a.day) return;
+    (byDay[a.day] = byDay[a.day] || {negative:0,neutral:0,positive:0})[a.label] !== undefined
+      && byDay[a.day][a.label]++; });
+  const days = Object.keys(byDay).sort();
+  if (!days.length){ el.innerHTML = `<div class="empty">No dated articles.</div>`; return; }
+  const W=600, H=250, padL=34, padB=30, padT=8, padR=6;
+  const iw = W-padL-padR, ih = H-padT-padB;
+  const max = Math.max(...days.map(d => ORDER.reduce((s,l)=>s+byDay[d][l],0)), 1);
+  const yMax = Math.ceil(max/4)*4 || 4;
+  const bw = Math.min(iw/days.length*0.65, 34);
+  const step = iw/days.length;
+  let g = "";
+  for (let t=0; t<=4; t++){
+    const v = yMax/4*t, y = padT+ih-v/yMax*ih;
+    g += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${GRID}" stroke-width="1"/>
+          <text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="10" fill="${MUTED}">${v}</text>`;
+  }
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = g;
+  const kx = Math.max(1, Math.ceil(days.length/7));
+  days.forEach((d,i)=>{
+    const cx = padL + step*(i+0.5);
+    if (i % kx === 0){
+      const lbl = document.createElementNS("http://www.w3.org/2000/svg","text");
+      lbl.setAttribute("x",cx); lbl.setAttribute("y",H-10);
+      lbl.setAttribute("text-anchor","middle"); lbl.setAttribute("font-size","10");
+      lbl.setAttribute("fill",MUTED); lbl.textContent = d.slice(5);
+      svg.appendChild(lbl);
+    }
+    let y = padT+ih;
+    const totalD = ORDER.reduce((s,l)=>s+byDay[d][l],0);
+    ORDER.forEach((l,li)=>{
+      const v = byDay[d][l]; if (!v) return;
+      const hpx = Math.max(v/yMax*ih - 2, 1);
+      y -= hpx;
+      const isTop = ORDER.slice(li+1).every(l2=>!byDay[d][l2]);
+      const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      r.setAttribute("x",(cx-bw/2).toFixed(1)); r.setAttribute("y",y.toFixed(1));
+      r.setAttribute("width",bw.toFixed(1)); r.setAttribute("height",hpx.toFixed(1));
+      r.setAttribute("rx", isTop ? 3 : 1);
+      r.setAttribute("fill", SENT_C[l]);
+      hover(r, ()=>`<b>${d}</b><br>${EMOJI[l]} ${l}: ${v}<br>total: ${totalD}`);
+      svg.appendChild(r);
+      y -= 2;
+    });
+  });
+  el.innerHTML =
+    `<div class="legend" style="margin-bottom:6px">${ORDER.map(l=>`<span><span class="sw" style="background:${SENT_C[l]}"></span>${EMOJI[l]} ${l}</span>`).join("")}</div>`;
+  el.appendChild(svg);
+  const det = document.createElement("details"); det.className = "exp";
+  det.innerHTML = `<summary>Table view</summary><div class="scrollx"><table class="tbl">
+    <tr><th>day</th><th class="num">negative</th><th class="num">neutral</th>
+    <th class="num">positive</th><th class="num">total</th></tr>
+    ${days.map(d=>`<tr><td>${d}</td>${ORDER.map(l=>`<td class="num">${byDay[d][l]}</td>`).join("")}
+      <td class="num">${ORDER.reduce((s,l)=>s+byDay[d][l],0)}</td></tr>`).join("")}
+    </table></div>`;
+  el.appendChild(det);
+}
+
+function issuesInto(el, rows){
+  const count = {};
+  rows.forEach(a => new Set(a.aspects).forEach(t => count[t]=(count[t]||0)+1));
+  const entries = Object.entries(count).sort((x,y)=>y[1]-x[1]);
+  if (!entries.length){ el.innerHTML = `<div class="empty">No aspect tags in this slice.</div>`; return; }
+  const max = entries[0][1];
+  el.innerHTML = `<div class="hbars">` + entries.map(([t,n])=>
+    `<div class="hb"><div class="nm" title="${esc(t)}">${esc(t)}</div>
+     <div class="tr"><div class="bar" data-t="${esc(t)}" data-n="${n}"
+       style="width:${(n/max*100).toFixed(1)}%"></div></div>
+     <div class="vl">${n}</div></div>`).join("") + `</div>
+   <details class="exp"><summary>Table view</summary><table class="tbl">
+     <tr><th>aspect</th><th class="num">articles</th></tr>
+     ${entries.map(([t,n])=>`<tr><td>${esc(t)}</td><td class="num">${n}</td></tr>`).join("")}
+   </table></details>`;
+  el.querySelectorAll(".bar").forEach(b =>
+    hover(b, ()=>`<b>${esc(b.dataset.t)}</b><br>${b.dataset.n} articles`));
+}
+
+function topicsInto(el, rows){
+  const n = +document.getElementById("ntop").value;
+  const labels = D.topics[String(n)] || [];
+  const ti = D.topic_ns.indexOf(n);
+  if (!labels.length || ti < 0){ el.innerHTML = `<div class="empty">Not enough text to extract topics.</div>`; return; }
+  const agg = {};
+  rows.forEach(a => {
+    const t = a.tp[ti]; if (t < 0) return;
+    const g = agg[t] = agg[t] || {n:0, s:0, sn:0};
+    g.n++; if (a.score != null){ g.s += a.score; g.sn++; }
+  });
+  const rws = Object.entries(agg).sort((x,y)=>y[1].n-x[1].n);
+  if (!rws.length){ el.innerHTML = `<div class="empty">No articles in this slice.</div>`; return; }
+  el.innerHTML = `<div class="scrollx"><table class="tbl">
+    <tr><th>Top terms</th><th class="num">Articles</th><th class="num">Mean tone</th></tr>
+    ${rws.map(([t,g])=>`<tr><td>${esc(labels[t]||"—")}</td><td class="num">${g.n}</td>
+      <td class="num">${g.sn?fmt1(g.s/g.sn):"—"}</td></tr>`).join("")}
+    </table></div>`;
+}
+
+function sourcesInto(el, rows){
+  const agg = {};
+  rows.forEach(a => {
+    if (!a.publisher) return;
+    const g = agg[a.publisher] = agg[a.publisher] || {n:0, s:0, sn:0, neg:0};
+    g.n++; if (a.score != null){ g.s += a.score; g.sn++; }
+    if (a.label === "negative") g.neg++;
+  });
+  const rws = Object.entries(agg).sort((x,y)=>y[1].n-x[1].n);
+  if (!rws.length){ el.innerHTML = `<div class="empty">No publisher data.</div>`; return; }
+  el.innerHTML = `<div class="scrollx"><table class="tbl">
+    <tr><th>Publisher</th><th class="num">Articles</th><th class="num">Mean tone</th><th class="num">Neg</th></tr>
+    ${rws.map(([p,g])=>`<tr><td>${esc(p)}</td><td class="num">${g.n}</td>
+      <td class="num">${g.sn?fmt1(g.s/g.sn):"—"}</td><td class="num">${g.neg}</td></tr>`).join("")}
+    </table></div>`;
+}
+
+function renderAnalysis(){
+  const rows = fAn.apply(A);
+  const f = document.getElementById("faces-an");
+  if (!rows.length){
+    f.innerHTML = `<div class="empty">No articles match these filters.</div>`;
+    ["tone-an","tl-an","iss-an","topics-an","src-an"].forEach(id =>
+      document.getElementById(id).innerHTML = "");
+    return;
+  }
+  f.innerHTML = facesHTML(rows);
+  toneBarInto(document.getElementById("tone-an"), rows);
+  timelineInto(document.getElementById("tl-an"), rows);
+  issuesInto(document.getElementById("iss-an"), rows);
+  topicsInto(document.getElementById("topics-an"), rows);
+  sourcesInto(document.getElementById("src-an"), rows);
+}
+
+/* =========================== TAB 3 : GRAPH ============================== */
+const fGr = makeFilters("f-gr", renderGraph);
+["g-dist","g-src","g-min"].forEach(id =>
+  document.getElementById(id).addEventListener("input", ()=>{
+    document.getElementById("g-src-v").textContent = document.getElementById("g-src").value;
+    document.getElementById("g-min-v").textContent = document.getElementById("g-min").value;
+    renderGraph();
+  }));
+
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildGraph(rows, includeDistricts, topSources, minW){
+  const byPub = {};
+  rows.forEach(a => { const p = pub(a); (byPub[p]=byPub[p]||[]).push(a); });
+  const keep = Object.entries(byPub).sort((x,y)=>y[1].length-x[1].length)
+    .slice(0, topSources).map(e=>e[0]);
+  const work = rows.filter(a => keep.includes(pub(a)));
+
+  const issueRows = {};   // tag -> [articles]
+  work.forEach(a => new Set(a.aspects).forEach(t => (issueRows[t]=issueRows[t]||[]).push(a)));
+  const keepIss = Object.entries(issueRows).sort((x,y)=>y[1].length-x[1].length)
+    .slice(0, 10).map(e=>e[0]);
+
+  const nodes = [], edges = [];
+  const meanTone = arr => {
+    const s = arr.filter(a=>a.score!=null);
+    return s.length ? s.reduce((v,a)=>v+a.score,0)/s.length : 0;
+  };
+  keep.forEach(p => { const arr = byPub[p].filter(a=>work.includes(a));
+    if (arr.length) nodes.push({id:"source:"+p, name:p, ntype:"source",
+      articles:arr.length, tone:meanTone(arr)}); });
+  keepIss.forEach(t => nodes.push({id:"issue:"+t, name:t, ntype:"issue",
+    articles:issueRows[t].length, tone:meanTone(issueRows[t])}));
+
+  // source -> issue
+  keep.forEach(p => keepIss.forEach(t => {
+    const w = byPub[p].filter(a => work.includes(a) && a.aspects.includes(t)).length;
+    if (w >= minW) edges.push({source:"source:"+p, target:"issue:"+t, weight:w});
+  }));
+
+  if (includeDistricts){
+    const distRows = {};
+    work.forEach(a => new Set(a.districts).forEach(t => (distRows[t]=distRows[t]||[]).push(a)));
+    const keepD = Object.entries(distRows).sort((x,y)=>y[1].length-x[1].length)
+      .slice(0, 8).map(e=>e[0]);
+    keepD.forEach(t => nodes.push({id:"district:"+t, name:t, ntype:"district",
+      articles:distRows[t].length, tone:meanTone(distRows[t])}));
+    const dMin = Math.max(2, minW);
+    keepIss.forEach(is => keepD.forEach(dt => {
+      const w = work.filter(a => a.aspects.includes(is) && a.districts.includes(dt)).length;
+      if (w >= dMin) edges.push({source:"issue:"+is, target:"district:"+dt, weight:w});
+    }));
+  }
+
+  // degree + drop orphans
+  const deg = {}; edges.forEach(e => { deg[e.source]=(deg[e.source]||0)+1;
+                                       deg[e.target]=(deg[e.target]||0)+1; });
+  const live = nodes.filter(nd => deg[nd.id]);
+  live.forEach(nd => {
+    nd.degree = deg[nd.id];
+    const nb = edges.filter(e=>e.source===nd.id||e.target===nd.id)
+      .map(e => e.source===nd.id ? e.target : e.source)
+      .map(id => live.find(n=>n.id===id)?.name).filter(Boolean).sort();
+    nd.connections = nb.slice(0,6);
+  });
+  return {nodes:live, edges, work};
+}
+
+function springLayout(nodes, edges){
+  const n = nodes.length; if (!n) return;
+  const rand = mulberry32(42);
+  nodes.forEach(nd => { nd.x = rand(); nd.y = rand(); });
+  if (n === 1){ nodes[0].x = 0; nodes[0].y = 0; return; }
+  const k = 1.9/Math.sqrt(n);
+  const wmax = Math.max(...edges.map(e=>e.weight), 1);
+  const idx = new Map(nodes.map((nd,i)=>[nd.id,i]));
+  let t = 0.1; const dt = t/221;
+  for (let it=0; it<220; it++){
+    const dis = nodes.map(()=>[0,0]);
+    for (let i=0;i<n;i++) for (let j=i+1;j<n;j++){
+      let dx = nodes[i].x-nodes[j].x, dy = nodes[i].y-nodes[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy) || 1e-9;
+      const f = k*k/d/d;
+      dis[i][0]+=dx*f; dis[i][1]+=dy*f;
+      dis[j][0]-=dx*f; dis[j][1]-=dy*f;
+    }
+    edges.forEach(e => {
+      const i = idx.get(e.source), j = idx.get(e.target);
+      let dx = nodes[i].x-nodes[j].x, dy = nodes[i].y-nodes[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy) || 1e-9;
+      const f = d/k*(e.weight/wmax);
+      dis[i][0]-=dx*f; dis[i][1]-=dy*f;
+      dis[j][0]+=dx*f; dis[j][1]+=dy*f;
+    });
+    for (let i=0;i<n;i++){
+      const [dx,dy] = dis[i], d = Math.sqrt(dx*dx+dy*dy) || 1e-9;
+      const lim = Math.min(d, t);
+      nodes[i].x += dx/d*lim; nodes[i].y += dy/d*lim;
+    }
+    t -= dt;
+  }
+  const xs = nodes.map(nd=>nd.x), ys = nodes.map(nd=>nd.y);
+  const sx = (Math.max(...xs)-Math.min(...xs))||1, sy = (Math.max(...ys)-Math.min(...ys))||1;
+  nodes.forEach(nd => {
+    nd.x = (nd.x-Math.min(...xs))/sx*2-1;
+    nd.y = (nd.y-Math.min(...ys))/sy*2-1;
+  });
+}
+
+let gState = {nodes:[], edges:[], work:[], picked:null};
+
+function nodeArticles(node){
+  if (!node) return [];
+  const [ntype, name] = [node.ntype, node.name];
+  if (ntype === "source")   return gState.work.filter(a => pub(a) === name);
+  if (ntype === "issue")    return gState.work.filter(a => a.aspects.includes(name));
+  if (ntype === "district") return gState.work.filter(a => a.districts.includes(name));
+  return [];
+}
+
+function renderGraphDetail(){
+  const el = document.getElementById("gdetail");
+  const nd = gState.nodes.find(n => n.id === gState.picked);
+  if (!nd){
+    el.innerHTML = `<div class="card-h">Node details</div>
+      <div class="card-s">Nothing selected yet.</div>
+      <div class="empty">👆 Click any node in the graph to see its details,
+        connections and articles here.</div>
+      <div class="note">${gState.nodes.length} nodes · ${gState.edges.length} links in the current view.</div>`;
+    return;
+  }
+  const meta = NODE_TYPES[nd.ntype];
+  const arts = nodeArticles(nd);
+  el.innerHTML = `
+    <div class="card-h"><span style="color:${meta.color}">●</span> ${esc(nd.name)}</div>
+    <div class="card-s">${meta.label} · ${nd.degree} connections</div>
+    <div style="display:flex;gap:18px;margin:8px 0 4px 0">
+      <div><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Articles</div>
+        <div style="font-size:1.6rem;font-weight:650">${nd.articles}</div></div>
+      <div><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Mean tone</div>
+        <div style="font-size:1.6rem;font-weight:650">${fmt1(nd.tone)}</div></div>
+    </div>
+    <div style="font-weight:600;font-size:.84rem;margin-top:8px">Tone of its coverage</div>
+    ${facesHTML(arts, true)}
+    <div style="font-weight:600;font-size:.84rem;margin-bottom:5px">Connected to</div>
+    <div>${nd.connections.map(c=>`<span class="uk-tag">${esc(c)}</span>`).join(" ") || "—"}</div>
+    <div style="font-weight:600;font-size:.84rem;margin:12px 0 6px 0">Articles</div>
+    <div class="cards c1">${[...arts].sort((x,y)=>(y.date||"").localeCompare(x.date||""))
+      .slice(0,6).map(articleCard).join("")}</div>`;
+}
+
+function renderGraph(){
+  const rows = fGr.apply(A);
+  const wrap = document.getElementById("gwrap");
+  const includeD = document.getElementById("g-dist").checked;
+  const topS = +document.getElementById("g-src").value;
+  const minW = +document.getElementById("g-min").value;
+  if (!rows.length){
+    wrap.innerHTML = `<div class="empty">No articles match these filters.</div>`;
+    gState = {nodes:[],edges:[],work:[],picked:null};
+    renderGraphDetail(); document.getElementById("gtable").innerHTML = ""; return;
+  }
+  const {nodes, edges, work} = buildGraph(rows, includeD, topS, minW);
+  gState = {nodes, edges, work, picked:null};
+  if (!nodes.length){
+    wrap.innerHTML = `<div class="empty">No connections at this threshold —
+      lower the minimum link strength.</div>`;
+    renderGraphDetail(); document.getElementById("gtable").innerHTML = ""; return;
+  }
+  springLayout(nodes, edges);
+
+  const W=880, H=620, pad=70;
+  const px = x => pad + (x+1)/2*(W-2*pad);
+  const py = y => pad + (1-(y+1)/2)*(H-2*pad);
+  const amax = Math.max(...nodes.map(nd=>nd.articles), 1);
+  const wmax = Math.max(...edges.map(e=>e.weight), 1);
+  const pos = new Map(nodes.map(nd=>[nd.id, [px(nd.x), py(nd.y)]]));
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  edges.forEach(e => {
+    const [x0,y0] = pos.get(e.source), [x1,y1] = pos.get(e.target);
+    const ln = document.createElementNS("http://www.w3.org/2000/svg","line");
+    ln.setAttribute("x1",x0); ln.setAttribute("y1",y0);
+    ln.setAttribute("x2",x1); ln.setAttribute("y2",y1);
+    ln.setAttribute("stroke", `rgba(11,11,11,${(0.07+0.22*e.weight/wmax).toFixed(2)})`);
+    ln.setAttribute("stroke-width", (0.6+3.4*e.weight/wmax).toFixed(2));
+    svg.appendChild(ln);
+  });
+
+  nodes.forEach(nd => {
+    const [x,y] = pos.get(nd.id);
+    const r = Math.max(6, Math.sqrt(nd.articles/amax)*19);
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class","gnode"); g.dataset.id = nd.id;
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",r.toFixed(1));
+    c.setAttribute("fill", NODE_TYPES[nd.ntype].color);
+    c.setAttribute("stroke", SURFACE); c.setAttribute("stroke-width","2");
+    const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",x); t.setAttribute("y",y+r+12);
+    t.setAttribute("text-anchor","middle"); t.setAttribute("font-size","10.5");
+    t.setAttribute("fill", INK2); t.textContent = nd.name;
+    g.appendChild(c); g.appendChild(t);
+    hover(g, ()=>`<b>${esc(nd.name)}</b><br>type: ${NODE_TYPES[nd.ntype].label}<br>
+      articles: ${nd.articles}<br>links: ${nd.degree}<br>
+      mean tone: ${fmt1(nd.tone)}<br>connected to: ${esc(nd.connections.join(", "))}`);
+    g.addEventListener("click", ()=>{
+      gState.picked = (gState.picked === nd.id) ? null : nd.id;
+      svg.querySelectorAll(".gnode").forEach(el =>
+        el.classList.toggle("sel", el.dataset.id === gState.picked));
+      renderGraphDetail();
+    });
+    svg.appendChild(g);
+  });
+
+  wrap.innerHTML = ""; wrap.appendChild(svg);
+  renderGraphDetail();
+
+  document.getElementById("gtable").innerHTML = `<table class="tbl">
+    <tr><th>Node</th><th>Type</th><th class="num">Articles</th><th class="num">Links</th>
+    <th class="num">Mean tone</th><th>Connected to</th></tr>
+    ${[...nodes].sort((x,y)=>y.degree-x.degree).map(nd=>`<tr>
+      <td>${esc(nd.name)}</td><td>${NODE_TYPES[nd.ntype].label}</td>
+      <td class="num">${nd.articles}</td><td class="num">${nd.degree}</td>
+      <td class="num">${fmt1(nd.tone)}</td><td>${esc(nd.connections.join(", "))}</td></tr>`).join("")}
+    </table>`;
+}
+
+/* ========================== TAB 4 : ARTICLES ============================ */
+const fArt = makeFilters("f-art", renderArticles);
+const sentSel = new Set();
+document.getElementById("sent-art").addEventListener("click", ev => {
+  const ch = ev.target.closest(".chip"); if (!ch) return;
+  const s = ch.dataset.s;
+  if (sentSel.has(s)) sentSel.delete(s); else sentSel.add(s);
+  ch.classList.toggle("on", sentSel.has(s));
+  renderArticles();
+});
+document.getElementById("q-art").addEventListener("input", renderArticles);
+document.getElementById("nart").addEventListener("input", e=>{
+  document.getElementById("nart-v").textContent = e.target.value; renderArticles();
+});
+function renderArticles(){
+  let rows = fArt.apply(A);
+  const q = document.getElementById("q-art").value.trim().toLowerCase();
+  if (q) rows = rows.filter(a => a.search.includes(q));
+  if (sentSel.size) rows = rows.filter(a => sentSel.has(a.label));
+  document.getElementById("c-art").innerHTML = `<b>${rows.length}</b> articles`;
+  document.getElementById("faces-art").innerHTML = rows.length ? facesHTML(rows) : "";
+  renderCards(document.getElementById("cards-art"), rows,
+    +document.getElementById("nart").value);
+}
+
+/* ================================ boot ================================== */
+renderBrowse(); renderAnalysis(); renderGraph(); renderArticles();
+</script>
+</body>
+</html>
